@@ -1,0 +1,10 @@
+body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: sans-serif;
+}
+#content {
+  width: 60%;
+}
