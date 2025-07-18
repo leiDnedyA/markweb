@@ -16,7 +16,7 @@ async function parseUrl(url) {
     .replaceAll(
       /<a href="(https?:\/\/[^"]+)">([\s\S]*?)<\/a>/g,
       (_, url, text) =>
-        `<a href="#" onclick="handleLinkClick(event, '${url}');">${text}</a>(<a href="${url}" target="_blank">+</a>)`
+        `<a href="#" onclick="handleLinkClick(event, '${url}');">${text}</a><a class="new-tab" href="${url}" target="_blank">+</a>`
     )
   cache[url] = html;
   return html;
