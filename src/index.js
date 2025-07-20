@@ -127,7 +127,7 @@ function preProcessHTML(html, bookmarkedParas) {
         return `<a href="#" 
           onmouseover="showStatus('${url}')"
           onmouseout="hideStatus()"
-          onclick="handleLinkClick(event, '${url}');">${text}</a><a class="new-tab" href="${url}" target="_blank">+</a>`
+          onclick="handleLinkClick(event, '${url}');">${text}</a><a class="new-tab" href="${url}" target="_blank">&rarr;</a>`
       }
     )
     .replaceAll(
