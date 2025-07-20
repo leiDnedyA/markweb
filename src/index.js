@@ -13,6 +13,24 @@ const loadBookmarkButton = document.querySelector('#load-bookmark');
 const addBookmarkButton = document.querySelector('#add-bookmark-button');
 const deleteBookmarkButton = document.querySelector('#delete-bookmark-button');
 
+function parseJinaResponse(input) {
+  const lines = input.split('\n');
+
+  const titleLine = lines.find(line => line.startsWith('Title:'));
+  const urlLine = lines.find(line => line.startsWith('URL Source:'));
+  const contentIndex = lines.findIndex(line => line.startsWith('Markdown Content:'));
+
+  const title = titleLine ? titleLine.replace('Title:', '').trim() : '';
+  const url = urlLine ? urlLine.replace('URL Source:', '').trim() : '';
+  const content = contentIndex !== -1 ? lines.slice(contentIndex + 1).join('\n') : '';
+
+  return {
+    title,
+    url,
+    content
+  };
+}
+
 function getDomPath(element) {
   const path = [];
   while (element && element.nodeType === Node.ELEMENT_NODE) {
@@ -111,7 +129,8 @@ function deleteBookmark(url) {
 async function urlToMarkdown(url) {
   const markdown = await fetch('https://r.jina.ai/' + url, {
     headers: {
-      "X-No-Cache": true
+      "X-No-Cache": true,
+      "X-Md-Heading-Style": "setext",
     }
   })
     .then(response => response.text());
@@ -183,11 +202,17 @@ async function loadPage(url) {
     content.innerHTML = `loading <em>${url}</em>`
   }
 
-  const markdown = isBookmarked ? bookmarks[url].mdContent : await urlToMarkdown(url);
+  const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await urlToMarkdown(url);
+  const {
+    title,
+    content: markdown
+  } = parseJinaResponse(rawMarkdown);
   const rawHtml = marked.parse(markdown);
   const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url].bookmarkedParas : undefined);
+
   content.innerHTML = html;
-  postProcessHTML(url, markdown);
+  document.title = title;
+  postProcessHTML(url, rawMarkdown);
 
   renderParagraphJumpButton();
 
