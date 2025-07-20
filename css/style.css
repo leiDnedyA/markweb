@@ -177,6 +177,13 @@ button:hover {
   background-color: #4db6ac;
 }
 
+#next-bookmark {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  display: block;
+}
+
 @media (max-width: 768px) {
   body {
     font-size: 1.05rem;

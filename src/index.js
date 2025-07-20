@@ -1,7 +1,6 @@
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
 let currentUrl = '';
-
-const cache = {};
+let currParaBookmarkIndex = 0;
 
 const urlInput = document.querySelector('#url-input');
 const inputForm = document.querySelector('#input-form');
@@ -9,6 +8,7 @@ const container = document.querySelector('#content');
 const statusBar = document.querySelector('#status-bar');
 const bookmarksDropdown = document.querySelector('#bookmarks');
 const bookmarkContainer = document.querySelector('#bookmark-container');
+const nextBookmarkParaButton = document.querySelector('#next-bookmark')
 const loadBookmarkButton = document.querySelector('#load-bookmark');
 const addBookmarkButton = document.querySelector('#add-bookmark-button');
 const deleteBookmarkButton = document.querySelector('#delete-bookmark-button');
@@ -59,6 +59,11 @@ function renderBookmarksDropdown() {
   });
 }
 
+const renderParagraphJumpButton = () => {
+  const bookmarkedParas = getBookmarks()?.[currentUrl]?.bookmarkedParas;
+  nextBookmarkParaButton.style.display = (bookmarkedParas && bookmarkedParas?.length > 0) ? 'block' : 'none';
+}
+
 /*
  * Bookmark structure: 
  * {
@@ -104,9 +109,6 @@ function deleteBookmark(url) {
 }
 
 async function urlToMarkdown(url) {
-  if (cache.hasOwnProperty(url)) {
-    return cache[url];
-  }
   const markdown = await fetch('https://r.jina.ai/' + url, {
     headers: {
       "X-No-Cache": true
@@ -116,7 +118,7 @@ async function urlToMarkdown(url) {
   return markdown;
 }
 
-function preProcessHTML(html, bookmarkParas) {
+function preProcessHTML(html, bookmarkedParas) {
   let pIndex = 0;
   return html
     .replaceAll(
@@ -131,7 +133,7 @@ function preProcessHTML(html, bookmarkParas) {
     .replaceAll(
       /<p>([\s\S]*?)<\/p>/g,
       (_, content) => {
-        const isBookmarked = bookmarkParas && bookmarkParas.includes(`${pIndex}`);
+        const isBookmarked = bookmarkedParas && bookmarkedParas.includes(`${pIndex}`);
         const result = `<p>
           ${isBookmarked ? `<span class="bookmark-indicator">${bookmarkSvg}</span>` : ''}
           <span class="tooltip"><a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">${isBookmarked ? 'Unbookmark Paragraph' : 'Bookmark Paragraph'
@@ -151,7 +153,6 @@ function postProcessHTML(url, markdown) {
       anchor.onclick = (e) => {
         e.preventDefault();
         const bookmarks = getBookmarks();
-        console.log({ bookmarks })
         if (!bookmarks.hasOwnProperty(url)) {
           saveBookmark(url, markdown, pIndex);
         } else {
@@ -188,6 +189,8 @@ async function loadPage(url) {
   content.innerHTML = html;
   postProcessHTML(url, markdown);
 
+  renderParagraphJumpButton();
+
   console.log(`loaded.`);
 }
 
@@ -214,6 +217,13 @@ window.onload = () => {
     renderBookmarksDropdown();
     await loadPage(START_URL);
   };
+  nextBookmarkParaButton.onclick = () => {
+    const bookmarkedParas = getBookmarks()?.[currentUrl].bookmarkedParas;
+    if (bookmarkedParas.length > 0) {
+      this.scrollToBookmarkPara(currParaBookmarkIndex % bookmarkedParas.length);
+      currParaBookmarkIndex++;
+    }
+  }
 }
 
 window.addEventListener('popstate', (e) => {
