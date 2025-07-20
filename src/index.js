@@ -203,6 +203,8 @@ async function loadPage(url) {
   console.log(`loading ${url}`)
   currentUrl = url;
 
+  urlInput.value = url;
+
   const bookmarks = getBookmarks();
   const isBookmarked = bookmarks.hasOwnProperty(url);
   if (!isBookmarked) {
