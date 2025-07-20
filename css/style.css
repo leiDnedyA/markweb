@@ -193,7 +193,9 @@ button:hover {
   position: fixed;
   bottom: 0;
   left: 0;
-  display: block;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   z-index: 999;
 }
 

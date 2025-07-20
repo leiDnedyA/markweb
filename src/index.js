@@ -80,7 +80,7 @@ function renderBookmarksDropdown() {
 
 const renderParagraphJumpButton = () => {
   const bookmarkedParas = getBookmarks()?.[currentUrl]?.bookmarkedParas;
-  nextBookmarkParaButton.style.display = (bookmarkedParas && bookmarkedParas?.length > 0) ? 'block' : 'none';
+  nextBookmarkParaButton.style.display = (bookmarkedParas && bookmarkedParas?.length > 0) ? 'flex' : 'none';
 }
 
 /*
