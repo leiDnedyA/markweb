@@ -61,6 +61,16 @@ p > span.tooltip {
   display: none;  /* Initially hidden */
 }
 
+span.bookmark-indicator {
+  position: absolute;
+  top: 10%;
+  right: 100%;
+  color: #f44;
+  padding: 5px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 p:hover .tooltip {
   display: block;
 }

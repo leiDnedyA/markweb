@@ -9,10 +9,13 @@
   <body>
     <form id="input-form">
       <input type="text" placeholder="https://aydendiel.dev/" id="url-input">
-      <input type="submit">
+      <input type="submit" value="Load Page">
+      <button id="delete-bookmark-button" style="display: none;">Remove Bookmark</button>
     </form>
-    <select name="bookmarks" id="bookmarks">
-    </select>
+    <div id="bookmark-container">
+      <select name="bookmarks" id="bookmarks"></select>
+      <button id="load-bookmark">Load</button>
+    </div>
     <div id="status-bar"></div>
     <div id="content">
     </div>

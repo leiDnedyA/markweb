@@ -1,4 +1,5 @@
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
+let currentUrl = '';
 
 const cache = {};
 
@@ -7,6 +8,10 @@ const inputForm = document.querySelector('#input-form');
 const container = document.querySelector('#content');
 const statusBar = document.querySelector('#status-bar');
 const bookmarksDropdown = document.querySelector('#bookmarks');
+const bookmarkContainer = document.querySelector('#bookmark-container');
+const loadBookmarkButton = document.querySelector('#load-bookmark');
+const addBookmarkButton = document.querySelector('#add-bookmark-button');
+const deleteBookmarkButton = document.querySelector('#delete-bookmark-button');
 
 function getDomPath(element) {
   const path = [];
@@ -33,10 +38,20 @@ function hideStatus() {
   statusBar.style.display = 'none';
 }
 
+function scrollToBookmarkPara(bookmarkIndex) {
+  document.querySelector(`[data-paragraph-index="${getBookmarks()[currentUrl].bookmarkedParas[bookmarkIndex]}"]`)
+    ?.parentElement.parentElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+}
+
 function renderBookmarksDropdown() {
   const bookmarks = getBookmarks();
   bookmarksDropdown.innerHTML = '';
-  Object.keys(bookmarks).forEach(key => {
+  const bookmarkUrls = Object.keys(bookmarks);
+  bookmarkContainer.style.display = bookmarkUrls.length === 0 ? 'none' : 'block';
+  bookmarkUrls.forEach(key => {
     const option = document.createElement('option');
     option.innerText = key;
     option.value = key;
@@ -77,6 +92,17 @@ function saveBookmark(url, mdContent, paragraphIndex = undefined) {
   }
 }
 
+function deleteBookmark(url) {
+  const bookmarks = getBookmarks();
+  if (!bookmarks.hasOwnProperty(url)) {
+    const message = 'Error: tried deleting page from bookmarks, but the page is not currently bookmarked';
+    alert(message);
+    throw new Error(message);
+  }
+  delete bookmarks[url];
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+}
+
 async function urlToMarkdown(url) {
   if (cache.hasOwnProperty(url)) {
     return cache[url];
@@ -90,7 +116,7 @@ async function urlToMarkdown(url) {
   return markdown;
 }
 
-function preProcessHTML(html) {
+function preProcessHTML(html, bookmarkParas) {
   let pIndex = 0;
   return html
     .replaceAll(
@@ -105,8 +131,11 @@ function preProcessHTML(html) {
     .replaceAll(
       /<p>([\s\S]*?)<\/p>/g,
       (_, content) => {
+        const isBookmarked = bookmarkParas && bookmarkParas.includes(`${pIndex}`);
         const result = `<p>
-          <span class="tooltip"><a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">Add bookmark</a></span>
+          ${isBookmarked ? `<span class="bookmark-indicator">&rarr;</span>` : ''}
+          <span class="tooltip"><a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">${isBookmarked ? 'Unbookmark Paragraph' : 'Bookmark Paragraph'
+          }</a></span>
           ${content}
         </p>`;
         pIndex++;
@@ -121,20 +150,44 @@ function postProcessHTML(url, markdown) {
       const pIndex = anchor.dataset.paragraphIndex;
       anchor.onclick = (e) => {
         e.preventDefault();
-        alert(`i: ${pIndex}`);
-        saveBookmark(url, markdown, pIndex);
+        const bookmarks = getBookmarks();
+        console.log({ bookmarks })
+        if (!bookmarks.hasOwnProperty(url)) {
+          saveBookmark(url, markdown, pIndex);
+        } else {
+          const bookmark = bookmarks[url];
+          const bookmarkedParas = bookmark.bookmarkedParas;
+          if (bookmarkedParas.includes(pIndex)) {
+            bookmark.bookmarkedParas = bookmarkedParas.filter(i => `${i}` !== `${pIndex}`);
+          } else {
+            bookmark.bookmarkedParas.push(pIndex);
+          }
+          localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        }
+        loadPage(url);
       }
     });
 }
 
 async function loadPage(url) {
-  content.innerHTML = `loading <em>${url}</em>`
   console.log(`loading ${url}`)
-  const markdown = await urlToMarkdown(url);
+  currentUrl = url;
+
+  const bookmarks = getBookmarks();
+  const isBookmarked = bookmarks.hasOwnProperty(url);
+  if (isBookmarked) {
+    deleteBookmarkButton.style.display = 'block';
+  } else {
+    deleteBookmarkButton.style.display = 'none';
+    content.innerHTML = `loading <em>${url}</em>`
+  }
+
+  const markdown = isBookmarked ? bookmarks[url].mdContent : await urlToMarkdown(url);
   const rawHtml = marked.parse(markdown);
-  const html = preProcessHTML(rawHtml);
+  const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url].bookmarkedParas : undefined);
   content.innerHTML = html;
   postProcessHTML(url, markdown);
+
   console.log(`loaded.`);
 }
 
@@ -148,6 +201,19 @@ async function handleLinkClick(e, url) {
 window.onload = () => {
   handleLinkClick(null, START_URL);
   renderBookmarksDropdown();
+  loadBookmarkButton.onclick = async (e) => {
+    e.preventDefault();
+    const value = bookmarksDropdown.value
+    if (value) {
+      await loadPage(value);
+    }
+  }
+  deleteBookmarkButton.onclick = async (e) => {
+    e.preventDefault();
+    deleteBookmark(currentUrl);
+    renderBookmarksDropdown();
+    await loadPage(START_URL);
+  };
 }
 
 window.addEventListener('popstate', (e) => {
@@ -157,6 +223,7 @@ window.addEventListener('popstate', (e) => {
 
 inputForm.onsubmit = async (e) => {
   e.preventDefault();
-  await loadPage(urlInput.value);
+  const url = urlInput.value;
+  await loadPage(url);
   history.pushState(url, url)
 }
