@@ -163,7 +163,6 @@ textarea {
   font-size: 1rem;
   box-sizing: border-box;
   outline: none;
-  transition: border 0.3s, box-shadow 0.3s;
 }
 
 input[type="text"]:focus,
@@ -181,7 +180,6 @@ button {
   font-weight: bold;
   border-radius: 2px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 input[type="submit"]:hover,
