@@ -10,14 +10,16 @@
     <form id="input-form">
       <input type="text" placeholder="https://aydendiel.dev/" id="url-input">
       <input type="submit" value="Load Page">
-      <button id="delete-bookmark-button" style="display: none;">Remove Bookmark</button>
     </form>
     <div id="bookmark-container">
-      <select name="bookmarks" id="bookmarks"></select>
-      <button id="load-bookmark">Load</button>
+      <select value="" name="bookmarks" id="bookmarks"></select>
+      <div>
+        <button id="load-bookmark">Load</button>
+        <button id="delete-bookmark-button">Remove</button>
+      </div>
     </div>
     <div id="status-bar"></div>
-    <button id="next-bookmark" style="display: none;">&rarr;</button>
+    <button id="next-bookmark" style="display: none;">goto bookmark &rarr;</button>
     <div id="content">
     </div>
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>

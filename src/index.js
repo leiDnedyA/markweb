@@ -67,7 +67,7 @@ function scrollToBookmarkPara(bookmarkIndex) {
 
 function renderBookmarksDropdown() {
   const bookmarks = getBookmarks();
-  bookmarksDropdown.innerHTML = '';
+  bookmarksDropdown.innerHTML = '<option disabled selected value> -- select a bookmark -- </option>';
   const bookmarkUrls = Object.keys(bookmarks);
   bookmarkContainer.style.display = bookmarkUrls.length === 0 ? 'none' : 'block';
   bookmarkUrls.forEach(key => {
@@ -155,15 +155,14 @@ function preProcessHTML(html, bookmarkedParas) {
       (_, content) => {
         const isBookmarked = bookmarkedParas && bookmarkedParas.includes(`${pIndex}`);
         const result = `<p>
-          ${
-            `
+          ${`
             <span
               class="bookmark-indicator ${isBookmarked ? 'bookmarked' : ''}"
             >
               <a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">
               ${bookmarkSvg(
-                isBookmarked ? '#fff' : '#aaa'
-              )}
+          isBookmarked ? '#fff' : '#aaa'
+        )}
               </a>
             </span>
             `}
@@ -195,6 +194,7 @@ function postProcessHTML(url, markdown) {
           localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
         }
         loadPage(url);
+        renderBookmarksDropdown();
       }
     });
 }
@@ -205,10 +205,7 @@ async function loadPage(url) {
 
   const bookmarks = getBookmarks();
   const isBookmarked = bookmarks.hasOwnProperty(url);
-  if (isBookmarked) {
-    deleteBookmarkButton.style.display = 'block';
-  } else {
-    deleteBookmarkButton.style.display = 'none';
+  if (!isBookmarked) {
     content.innerHTML = `loading <em>${url}</em>`
   }
 
@@ -244,11 +241,17 @@ window.onload = () => {
     const value = bookmarksDropdown.value
     if (value) {
       await loadPage(value);
+      renderBookmarksDropdown();
     }
   }
   deleteBookmarkButton.onclick = async (e) => {
     e.preventDefault();
-    deleteBookmark(currentUrl);
+    const value = bookmarksDropdown.value;
+    if (!value) return;
+    if (!confirm('Are you sure you want to remove the bookmark for ' + value + '?')) {
+      return
+    }
+    deleteBookmark(value);
     renderBookmarksDropdown();
     await loadPage(START_URL);
   };
