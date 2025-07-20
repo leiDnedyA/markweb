@@ -43,8 +43,26 @@ h5 { font-size: 1.1rem; }
 h6 { font-size: 1rem; }
 
 p {
+  position: relative;
+  display: inline-block;
   margin-bottom: 1rem;
   color: #cccccc;
+}
+
+p > span.tooltip {
+  position: absolute;
+  top: 100%;     /* Position below the button */
+  left: 0;
+  background: black;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: none;  /* Initially hidden */
+}
+
+p:hover .tooltip {
+  display: block;
 }
 
 ul, ol {
