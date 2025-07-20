@@ -1,4 +1,4 @@
-const START_URL = 'lobste.rs';
+const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
 
 const cache = {};
 
@@ -10,7 +10,11 @@ async function parseUrl(url) {
   if (cache.hasOwnProperty(url)) {
     return cache[url];
   }
-  const markdown = await fetch('https://r.jina.ai/' + url)
+  const markdown = await fetch('https://r.jina.ai/' + url, {
+    headers: {
+      "X-No-Cache": true
+    }
+  })
     .then(response => response.text());
   const html = marked.parse(markdown)
     .replaceAll(
