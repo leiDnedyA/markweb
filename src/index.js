@@ -5,6 +5,16 @@ const cache = {};
 const urlInput = document.querySelector('#url-input');
 const inputForm = document.querySelector('#input-form');
 const container = document.querySelector('#content');
+const statusBar = document.querySelector('#status-bar');
+
+function showStatus(text) {
+  statusBar.style.display = 'block';
+  statusBar.innerText = text;
+}
+
+function hideStatus() {
+  statusBar.style.display = 'none';
+}
 
 async function parseUrl(url) {
   if (cache.hasOwnProperty(url)) {
@@ -20,14 +30,17 @@ async function parseUrl(url) {
     .replaceAll(
       /<a href="(https?:\/\/[^"]+)">([\s\S]*?)<\/a>/g,
       (_, url, text) =>
-        `<a href="#" onclick="handleLinkClick(event, '${url}');">${text}</a><a class="new-tab" href="${url}" target="_blank">+</a>`
+        `<a href="#" 
+          onmouseover="showStatus('${url}')"
+          onmouseout="hideStatus()"
+          onclick="handleLinkClick(event, '${url}');">${text}</a><a class="new-tab" href="${url}" target="_blank">+</a>`
     )
   cache[url] = html;
   return html;
 }
 
 async function loadPage(url) {
-  content.innerHTML = `loading <em><a href="${url}">${url}</a></em>`
+  content.innerHTML = `loading <em>${url}</em>`
   console.log(`loading ${url}`)
   const html = await parseUrl(url);
   content.innerHTML = html;
@@ -36,6 +49,7 @@ async function loadPage(url) {
 
 async function handleLinkClick(e, url) {
   e?.preventDefault();
+  hideStatus();
   await loadPage(url);
   history.pushState(url, url);
 }

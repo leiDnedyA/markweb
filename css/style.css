@@ -12,6 +12,15 @@ body {
   padding: 1rem;
 }
 
+#status-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #666;
+  font-size: 1em;
+  display: none;
+}
+
 #content {
   width: 100%;
   max-width: 700px;
