@@ -1,4 +1,5 @@
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
+// const START_URL = 'https://paulgraham.com/greatwork.html';
 let currentUrl = '';
 let currParaBookmarkIndex = 0;
 
@@ -154,9 +155,18 @@ function preProcessHTML(html, bookmarkedParas) {
       (_, content) => {
         const isBookmarked = bookmarkedParas && bookmarkedParas.includes(`${pIndex}`);
         const result = `<p>
-          ${isBookmarked ? `<span class="bookmark-indicator">${bookmarkSvg}</span>` : ''}
-          <span class="tooltip"><a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">${isBookmarked ? 'Unbookmark Paragraph' : 'Bookmark Paragraph'
-          }</a></span>
+          ${
+            `
+            <span
+              class="bookmark-indicator ${isBookmarked ? 'bookmarked' : ''}"
+            >
+              <a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">
+              ${bookmarkSvg(
+                isBookmarked ? '#fff' : '#aaa'
+              )}
+              </a>
+            </span>
+            `}
           ${content}
         </p>`;
         pIndex++;

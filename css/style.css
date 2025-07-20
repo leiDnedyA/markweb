@@ -72,6 +72,15 @@ span.bookmark-indicator {
   padding: 5px 10px;
   border-radius: 4px;
   white-space: nowrap;
+  display: none;
+}
+
+p:hover span.bookmark-indicator {
+  display: block;
+}
+
+span.bookmarked {
+  display: block;
 }
 
 p:hover .tooltip {
