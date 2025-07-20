@@ -133,7 +133,7 @@ function preProcessHTML(html, bookmarkParas) {
       (_, content) => {
         const isBookmarked = bookmarkParas && bookmarkParas.includes(`${pIndex}`);
         const result = `<p>
-          ${isBookmarked ? `<span class="bookmark-indicator">&rarr;</span>` : ''}
+          ${isBookmarked ? `<span class="bookmark-indicator">${bookmarkSvg}</span>` : ''}
           <span class="tooltip"><a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">${isBookmarked ? 'Unbookmark Paragraph' : 'Bookmark Paragraph'
           }</a></span>
           ${content}
