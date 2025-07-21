@@ -124,25 +124,30 @@ async function loadPage(url) {
     content.innerHTML = `<span>loading <em>${url}</em></span>`
   }
 
-  const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url);
-  currentMarkdown = rawMarkdown;
+  try {
+    const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url);
+    currentMarkdown = rawMarkdown;
+    const {
+      title,
+      content: markdown
+    } = parseJinaResponse(rawMarkdown);
+    const rawHtml = marked.parse(markdown);
+    const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url].bookmarkedParas : undefined);
 
-  const {
-    title,
-    content: markdown
-  } = parseJinaResponse(rawMarkdown);
-  const rawHtml = marked.parse(markdown);
-  const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url].bookmarkedParas : undefined);
+    content.innerHTML = html;
+    document.title = title;
+    postProcessHTML(url, rawMarkdown);
 
-  content.innerHTML = html;
-  document.title = title;
-  postProcessHTML(url, rawMarkdown);
+    stealFavicon(url);
 
-  stealFavicon(url);
+    renderParagraphJumpButton(currentUrl, getBookmarks());
 
-  renderParagraphJumpButton(currentUrl, getBookmarks());
-
-  console.log(`loaded.`);
+    console.log(`loaded.`);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to get cleaned page content, please try again later.')
+    return;
+  }
 }
 
 async function handleLinkClick(e, url) {
