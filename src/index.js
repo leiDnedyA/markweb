@@ -112,7 +112,7 @@ function postProcessHTML(url, markdown) {
     });
 }
 
-async function loadPage(url) {
+async function loadPage(url, isDemo = false) {
   console.log(`loading ${url}`)
   currentUrl = url;
 
@@ -125,12 +125,28 @@ async function loadPage(url) {
   }
 
   try {
-    const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url);
+    console.log(...arguments)
+    const rawMarkdown =
+      isDemo ? `
+# About Markweb
+
+Markweb de-clutters the web for reading.  
+To understand how links work, try clicking the '→' sign beside  
+this link, and then click the link itself: [How to Do Great Work (Paul Graham)](https://paulgraham.com/greatwork.html).
+
+To open Markweb from a webpage (let's say you're coming from \`https://example.com\`), you can simply add  
+\`leidnedya.github.io/markweb/#<your-url-here>\` before the URL.
+
+![demo gif](./demo.gif)
+    ` :
+        isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url);
     currentMarkdown = rawMarkdown;
     const {
       title,
       content: markdown
-    } = parseJinaResponse(rawMarkdown);
+    } = isDemo ?
+        { title: 'Welcome to Markweb!', content: rawMarkdown } :
+        parseJinaResponse(rawMarkdown);
     const rawHtml = marked.parse(markdown);
     const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url].bookmarkedParas : undefined);
 
@@ -164,7 +180,7 @@ window.onload = () => {
   window.handleLinkClick = handleLinkClick;
 
   const hashUrl = window.location.hash ? window.location.hash.slice(1) : null;
-  handleLinkClick(null, hashUrl ? hashUrl : START_URL);
+  loadPage(hashUrl ? hashUrl : START_URL, !hashUrl);
   renderBookmarksDropdown(getBookmarks());
   loadBookmarkButton.onclick = async (e) => {
     e.preventDefault();
