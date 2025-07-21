@@ -199,6 +199,10 @@ function postProcessHTML(url, markdown) {
     });
 }
 
+function stealFavicon(url) {
+  document.querySelector("link[rel='shortcut icon']").href = "https://corsproxy.io/?url=https://www.google.com/s2/favicons?domain=" + url
+}
+
 async function loadPage(url) {
   console.log(`loading ${url}`)
   currentUrl = url;
@@ -222,6 +226,8 @@ async function loadPage(url) {
   content.innerHTML = html;
   document.title = title;
   postProcessHTML(url, rawMarkdown);
+
+  stealFavicon(url);
 
   renderParagraphJumpButton();
 
