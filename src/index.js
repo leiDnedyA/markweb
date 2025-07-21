@@ -1,6 +1,7 @@
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
 // const START_URL = 'https://paulgraham.com/greatwork.html';
-let currentUrl = '';
+let currentUrl = null;
+let currentMarkdown = null;
 let currParaBookmarkIndex = 0;
 
 const urlInput = document.querySelector('#url-input');
@@ -13,6 +14,7 @@ const nextBookmarkParaButton = document.querySelector('#next-bookmark')
 const loadBookmarkButton = document.querySelector('#load-bookmark');
 const addBookmarkButton = document.querySelector('#add-bookmark-button');
 const deleteBookmarkButton = document.querySelector('#delete-bookmark-button');
+const pageBookmarkButton = document.querySelector('#page-bookmark-button');
 
 function parseJinaResponse(input) {
   const lines = input.split('\n');
@@ -212,10 +214,12 @@ async function loadPage(url) {
   const bookmarks = getBookmarks();
   const isBookmarked = bookmarks.hasOwnProperty(url);
   if (!isBookmarked) {
-    content.innerHTML = `loading <em>${url}</em>`
+    content.innerHTML = `<span>loading <em>${url}</em></span>`
   }
 
   const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await urlToMarkdown(url);
+  currentMarkdown = rawMarkdown;
+
   const {
     title,
     content: markdown
@@ -269,6 +273,19 @@ window.onload = () => {
       this.scrollToBookmarkPara(currParaBookmarkIndex % bookmarkedParas.length);
       currParaBookmarkIndex++;
     }
+  }
+  pageBookmarkButton.onclick = (e) => {
+    e.preventDefault();
+    const bookmarks = getBookmarks();
+    if (bookmarks.hasOwnProperty(currentUrl)) {
+      if (!confirm('Are you sure you want to remove the bookmark for ' + currentUrl + '?')) {
+        return;
+      }
+      deleteBookmark(currentUrl);
+    } else {
+      saveBookmark(currentUrl, currentMarkdown);
+    }
+    renderBookmarksDropdown();
   }
 }
 

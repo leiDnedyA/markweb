@@ -153,9 +153,16 @@ img {
   margin: 1rem 0;
 }
 
+#input-form {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
 input[type="text"],
 textarea {
-  margin-bottom: 1rem;
   background-color: #1e1e1e;
   color: #e0e0e0;
   border: 1px solid #333;
@@ -195,6 +202,16 @@ button:hover {
   flex-direction: row;
   align-items: center;
   z-index: 999;
+}
+
+#page-bookmark-button {
+  background: transparent;
+  display: block;
+  padding-top: 6px;
+}
+
+#page-bookmark-button:hover {
+  background: #333;
 }
 
 @media (max-width: 768px) {
