@@ -246,7 +246,8 @@ async function handleLinkClick(e, url) {
 }
 
 window.onload = () => {
-  handleLinkClick(null, START_URL);
+  const hashUrl = window.location.hash ? window.location.hash.slice(1) : null;
+  handleLinkClick(null, hashUrl ? hashUrl : START_URL);
   renderBookmarksDropdown();
   loadBookmarkButton.onclick = async (e) => {
     e.preventDefault();
