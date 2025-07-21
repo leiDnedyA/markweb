@@ -71,7 +71,7 @@ function renderBookmarksDropdown() {
   const bookmarks = getBookmarks();
   bookmarksDropdown.innerHTML = '<option disabled selected value> -- select a bookmark -- </option>';
   const bookmarkUrls = Object.keys(bookmarks);
-  bookmarkContainer.style.display = bookmarkUrls.length === 0 ? 'none' : 'block';
+  bookmarkContainer.style.display = bookmarkUrls.length === 0 ? 'none' : 'flex';
   bookmarkUrls.forEach(key => {
     const option = document.createElement('option');
     option.innerText = key;
