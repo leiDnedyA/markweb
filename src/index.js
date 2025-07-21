@@ -1,15 +1,12 @@
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
 // const START_URL = 'https://paulgraham.com/greatwork.html';
+
 let currentUrl = null;
 let currentMarkdown = null;
 let currParaBookmarkIndex = 0;
 
 const urlInput = document.querySelector('#url-input');
 const inputForm = document.querySelector('#input-form');
-const container = document.querySelector('#content');
-const statusBar = document.querySelector('#status-bar');
-const bookmarksDropdown = document.querySelector('#bookmarks');
-const bookmarkContainer = document.querySelector('#bookmark-container');
 const nextBookmarkParaButton = document.querySelector('#next-bookmark')
 const loadBookmarkButton = document.querySelector('#load-bookmark');
 const addBookmarkButton = document.querySelector('#add-bookmark-button');
@@ -50,15 +47,6 @@ function getDomPath(element) {
   return path.join(' > ');
 }
 
-function showStatus(text) {
-  statusBar.style.display = 'block';
-  statusBar.innerText = text;
-}
-
-function hideStatus() {
-  statusBar.style.display = 'none';
-}
-
 function scrollToBookmarkPara(bookmarkIndex) {
   document.querySelector(`[data-paragraph-index="${getBookmarks()[currentUrl].bookmarkedParas[bookmarkIndex]}"]`)
     ?.parentElement.parentElement.scrollIntoView({
@@ -67,77 +55,9 @@ function scrollToBookmarkPara(bookmarkIndex) {
     })
 }
 
-function renderBookmarksDropdown() {
-  const bookmarks = getBookmarks();
-  bookmarksDropdown.innerHTML = '<option disabled selected value> -- select a bookmark -- </option>';
-  const bookmarkUrls = Object.keys(bookmarks);
-  bookmarkContainer.style.display = bookmarkUrls.length === 0 ? 'none' : 'flex';
-  bookmarkUrls.forEach(key => {
-    const option = document.createElement('option');
-    option.innerText = key;
-    option.value = key;
-    bookmarksDropdown.appendChild(option);
-  });
-}
-
 const renderParagraphJumpButton = () => {
   const bookmarkedParas = getBookmarks()?.[currentUrl]?.bookmarkedParas;
   nextBookmarkParaButton.style.display = (bookmarkedParas && bookmarkedParas?.length > 0) ? 'flex' : 'none';
-}
-
-/*
- * Bookmark structure: 
- * {
- *  "https://example.com": {
- *    mdContent: "# Welcome to example.com\nThis is a ...",
- *    bookmarkedParas: [2, 5, ...]
- *  }
- * }
- * */
-function getBookmarks() {
-  return localStorage.getItem('bookmarks')
-    ? JSON.parse(localStorage.getItem('bookmarks')) : {};
-}
-
-function saveBookmark(url, mdContent, paragraphIndex = undefined) {
-  const bookmarks = getBookmarks();
-  const newBookmarks = { ...bookmarks };
-  if (bookmarks.hasOwnProperty(url)) {
-    newBookmarks[url].mdContent = mdContent;
-    const currParas = newBookmarks[url].bookmarkedParas;
-    newBookmarks[url].bookmarkedParas =
-      paragraphIndex !== undefined ?
-        (currParas ? [...currParas, paragraphIndex] : [paragraphIndex]) :
-        (currParas || []);
-  } else {
-    newBookmarks[url] = {
-      mdContent: mdContent,
-      bookmarkedParas: paragraphIndex ? [paragraphIndex] : []
-    }
-    localStorage.setItem('bookmarks', JSON.stringify(newBookmarks))
-  }
-}
-
-function deleteBookmark(url) {
-  const bookmarks = getBookmarks();
-  if (!bookmarks.hasOwnProperty(url)) {
-    const message = 'Error: tried deleting page from bookmarks, but the page is not currently bookmarked';
-    alert(message);
-    throw new Error(message);
-  }
-  delete bookmarks[url];
-  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-}
-
-async function urlToMarkdown(url) {
-  const markdown = await fetch('https://r.jina.ai/' + url, {
-    headers: {
-      "X-No-Cache": true,
-      "X-Md-Heading-Style": "setext",
-    }
-  })
-    .then(response => response.text());
-  return markdown;
 }
 
 function preProcessHTML(html, bookmarkedParas) {
@@ -196,13 +116,9 @@ function postProcessHTML(url, markdown) {
           localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
         }
         loadPage(url);
-        renderBookmarksDropdown();
+        renderBookmarksDropdown(getBookmarks());
       }
     });
-}
-
-function stealFavicon(url) {
-  document.querySelector("link[rel='shortcut icon']").href = "https://corsproxy.io/?url=https://www.google.com/s2/favicons?domain=" + url
 }
 
 async function loadPage(url) {
@@ -217,7 +133,7 @@ async function loadPage(url) {
     content.innerHTML = `<span>loading <em>${url}</em></span>`
   }
 
-  const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await urlToMarkdown(url);
+  const rawMarkdown = isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url);
   currentMarkdown = rawMarkdown;
 
   const {
@@ -248,13 +164,13 @@ async function handleLinkClick(e, url) {
 window.onload = () => {
   const hashUrl = window.location.hash ? window.location.hash.slice(1) : null;
   handleLinkClick(null, hashUrl ? hashUrl : START_URL);
-  renderBookmarksDropdown();
+  renderBookmarksDropdown(getBookmarks());
   loadBookmarkButton.onclick = async (e) => {
     e.preventDefault();
     const value = bookmarksDropdown.value
     if (value) {
       await loadPage(value);
-      renderBookmarksDropdown();
+      renderBookmarksDropdown(getBookmarks());
     }
   }
   deleteBookmarkButton.onclick = async (e) => {
@@ -265,7 +181,7 @@ window.onload = () => {
       return
     }
     deleteBookmark(value);
-    renderBookmarksDropdown();
+    renderBookmarksDropdown(getBookmarks());
     await loadPage(START_URL);
   };
   nextBookmarkParaButton.onclick = () => {
@@ -286,7 +202,7 @@ window.onload = () => {
     } else {
       saveBookmark(currentUrl, currentMarkdown);
     }
-    renderBookmarksDropdown();
+    renderBookmarksDropdown(getBookmarks());
   }
 }
 
