@@ -1,4 +1,4 @@
-async function getJinaMarkdown(url) {
+export async function getJinaMarkdown(url) {
   const markdown = await fetch('https://r.jina.ai/' + url, {
     headers: {
       "X-No-Cache": true,
@@ -9,7 +9,7 @@ async function getJinaMarkdown(url) {
   return markdown;
 }
 
-function stealFavicon(url) {
+export function stealFavicon(url) {
   document.querySelector("link[rel='shortcut icon']").href = "https://corsproxy.io/?url=https://www.google.com/s2/favicons?domain=" + url
 }
 

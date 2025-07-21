@@ -1,5 +1,10 @@
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+import { hideStatus, renderBookmarksDropdown, renderParagraphJumpButton, scrollToBookmarkPara, showStatus } from './view.js';
+import { deleteBookmark, getBookmarks, saveBookmark } from './data/bookmarks.js';
+import { bookmarkSvg } from './svg.js';
+import { getJinaMarkdown, stealFavicon } from './data/requests.js';
+
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
-// const START_URL = 'https://paulgraham.com/greatwork.html';
 
 let currentUrl = null;
 let currentMarkdown = null;
@@ -9,9 +14,9 @@ const urlInput = document.querySelector('#url-input');
 const inputForm = document.querySelector('#input-form');
 const nextBookmarkParaButton = document.querySelector('#next-bookmark')
 const loadBookmarkButton = document.querySelector('#load-bookmark');
-const addBookmarkButton = document.querySelector('#add-bookmark-button');
 const deleteBookmarkButton = document.querySelector('#delete-bookmark-button');
 const pageBookmarkButton = document.querySelector('#page-bookmark-button');
+const bookmarksDropdown = document.querySelector('#bookmarks');
 
 function parseJinaResponse(input) {
   const lines = input.split('\n');
@@ -45,19 +50,6 @@ function getDomPath(element) {
     element = element.parentNode;
   }
   return path.join(' > ');
-}
-
-function scrollToBookmarkPara(bookmarkIndex) {
-  document.querySelector(`[data-paragraph-index="${getBookmarks()[currentUrl].bookmarkedParas[bookmarkIndex]}"]`)
-    ?.parentElement.parentElement.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    })
-}
-
-const renderParagraphJumpButton = () => {
-  const bookmarkedParas = getBookmarks()?.[currentUrl]?.bookmarkedParas;
-  nextBookmarkParaButton.style.display = (bookmarkedParas && bookmarkedParas?.length > 0) ? 'flex' : 'none';
 }
 
 function preProcessHTML(html, bookmarkedParas) {
@@ -149,7 +141,7 @@ async function loadPage(url) {
 
   stealFavicon(url);
 
-  renderParagraphJumpButton();
+  renderParagraphJumpButton(currentUrl, getBookmarks());
 
   console.log(`loaded.`);
 }
@@ -162,6 +154,11 @@ async function handleLinkClick(e, url) {
 }
 
 window.onload = () => {
+
+  window.showStatus = showStatus;
+  window.hideStatus = hideStatus;
+  window.handleLinkClick = handleLinkClick;
+
   const hashUrl = window.location.hash ? window.location.hash.slice(1) : null;
   handleLinkClick(null, hashUrl ? hashUrl : START_URL);
   renderBookmarksDropdown(getBookmarks());
@@ -187,7 +184,7 @@ window.onload = () => {
   nextBookmarkParaButton.onclick = () => {
     const bookmarkedParas = getBookmarks()?.[currentUrl].bookmarkedParas;
     if (bookmarkedParas.length > 0) {
-      this.scrollToBookmarkPara(currParaBookmarkIndex % bookmarkedParas.length);
+      scrollToBookmarkPara(currParaBookmarkIndex % bookmarkedParas.length, getBookmarks(), currentUrl);
       currParaBookmarkIndex++;
     }
   }

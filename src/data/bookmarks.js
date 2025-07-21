@@ -8,12 +8,12 @@
  * }
  * */
 
-function getBookmarks() {
+export function getBookmarks() {
   return localStorage.getItem('bookmarks')
     ? JSON.parse(localStorage.getItem('bookmarks')) : {};
 }
 
-function saveBookmark(url, mdContent, paragraphIndex = undefined) {
+export function saveBookmark(url, mdContent, paragraphIndex = undefined) {
   const bookmarks = getBookmarks();
   const newBookmarks = { ...bookmarks };
   if (bookmarks.hasOwnProperty(url)) {
@@ -32,7 +32,7 @@ function saveBookmark(url, mdContent, paragraphIndex = undefined) {
   }
 }
 
-function deleteBookmark(url) {
+export function deleteBookmark(url) {
   const bookmarks = getBookmarks();
   if (!bookmarks.hasOwnProperty(url)) {
     const message = 'Error: tried deleting page from bookmarks, but the page is not currently bookmarked';
