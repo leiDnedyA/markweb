@@ -14,7 +14,6 @@ const urlInput = document.querySelector('#url-input');
 const inputForm = document.querySelector('#input-form');
 const nextBookmarkParaButton = document.querySelector('#next-bookmark')
 const loadBookmarkButton = document.querySelector('#load-bookmark');
-const deleteBookmarkButton = document.querySelector('#delete-bookmark-button');
 const pageBookmarkButton = document.querySelector('#page-bookmark-button');
 const bookmarksDropdown = document.querySelector('#bookmarks');
 
@@ -170,17 +169,6 @@ window.onload = () => {
       renderBookmarksDropdown(getBookmarks());
     }
   }
-  deleteBookmarkButton.onclick = async (e) => {
-    e.preventDefault();
-    const value = bookmarksDropdown.value;
-    if (!value) return;
-    if (!confirm('Are you sure you want to remove the bookmark for ' + value + '?')) {
-      return
-    }
-    deleteBookmark(value);
-    renderBookmarksDropdown(getBookmarks());
-    await loadPage(START_URL);
-  };
   nextBookmarkParaButton.onclick = () => {
     const bookmarkedParas = getBookmarks()?.[currentUrl].bookmarkedParas;
     if (bookmarkedParas.length > 0) {
