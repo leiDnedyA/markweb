@@ -1,18 +1,36 @@
 import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import { hideStatus, renderBookmarksDropdown, renderParagraphJumpButton, scrollToBookmarkPara, showStatus } from './view.js';
-import { deleteBookmark, getBookmarks, saveBookmark } from './data/bookmarks.js';
+import { hideStatus, renderBookmarksDropdown, renderBookmarkJumpButton, scrollToBookmark, showStatus } from './view.js';
+import { deleteBookmark, getBookmarkedBlocks, getBookmarks, saveBookmark, toggleBlockBookmark } from './data/bookmarks.js';
 import { bookmarkSvg } from './svg.js';
 import { getJinaMarkdown, stealFavicon } from './data/requests.js';
 
 const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
 
+// Kept in the same shape as a Jina response so that bookmarking the demo page
+// caches markdown that parseJinaResponse can read back.
+const DEMO_MARKDOWN = `Title: Welcome to Markweb!
+URL Source: ${START_URL}
+Markdown Content:
+
+# About Markweb
+
+Markweb de-clutters the web for reading.  
+To understand how links work, try clicking the '→' sign beside  
+this link, and then click the link itself: [How to Do Great Work (Paul Graham)](https://paulgraham.com/greatwork.html).
+
+To open Markweb from a webpage (let's say you're coming from \`https://example.com\`), you can simply add  
+\`leidnedya.github.io/markweb/#<your-url-here>\` before the URL.
+
+![demo gif](./demo.gif)
+`;
+
 let currentUrl = null;
 let currentMarkdown = null;
-let currParaBookmarkIndex = 0;
+let currBlockBookmarkIndex = 0;
 
 const urlInput = document.querySelector('#url-input');
 const inputForm = document.querySelector('#input-form');
-const nextBookmarkParaButton = document.querySelector('#next-bookmark')
+const nextBookmarkBlockButton = document.querySelector('#next-bookmark')
 const loadBookmarkButton = document.querySelector('#load-bookmark');
 const pageBookmarkButton = document.querySelector('#page-bookmark-button');
 const bookmarksDropdown = document.querySelector('#bookmarks');
@@ -51,13 +69,28 @@ function getDomPath(element) {
   return path.join(' > ');
 }
 
-function preProcessHTML(html, bookmarkedParas) {
+function bookmarkIndicator(kind, index, isBookmarked) {
+  return `
+    <span
+      class="bookmark-indicator ${isBookmarked ? 'bookmarked' : ''}"
+    >
+      <a data-bookmark-kind="${kind}" data-bookmark-index="${index}" class="bookmarkButton" href="#">
+      ${bookmarkSvg(isBookmarked ? '#fff' : '#aaa')}
+      </a>
+    </span>
+    `;
+}
+
+function preProcessHTML(html, bookmark) {
+  const bookmarkedParas = getBookmarkedBlocks(bookmark, 'paragraph');
+  const bookmarkedHeaders = getBookmarkedBlocks(bookmark, 'header');
   let pIndex = 0;
+  let hIndex = 0;
   return html
     .replaceAll(
       /<a href="(https?:\/\/[^"]+)">([\s\S]*?)<\/a>/g,
       (_, url, text) => {
-        return `<a href="#" 
+        return `<a href="#"
           onmouseover="showStatus('${url}')"
           onmouseout="hideStatus()"
           onclick="handleLinkClick(event, '${url}');">${text}</a><a class="new-tab" href="${url}" target="_blank">&rarr;</a>`
@@ -66,22 +99,23 @@ function preProcessHTML(html, bookmarkedParas) {
     .replaceAll(
       /<p>([\s\S]*?)<\/p>/g,
       (_, content) => {
-        const isBookmarked = bookmarkedParas && bookmarkedParas.includes(`${pIndex}`);
+        const isBookmarked = bookmarkedParas.includes(`${pIndex}`);
         const result = `<p>
-          ${`
-            <span
-              class="bookmark-indicator ${isBookmarked ? 'bookmarked' : ''}"
-            >
-              <a data-paragraph-index="${pIndex}" class="bookmarkButton" href="#">
-              ${bookmarkSvg(
-          isBookmarked ? '#fff' : '#aaa'
-        )}
-              </a>
-            </span>
-            `}
+          ${bookmarkIndicator('paragraph', pIndex, isBookmarked)}
           ${content}
         </p>`;
         pIndex++;
+        return result;
+      })
+    .replaceAll(
+      /<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/g,
+      (_, level, attributes, content) => {
+        const isBookmarked = bookmarkedHeaders.includes(`${hIndex}`);
+        const result = `<h${level}${attributes}>
+          ${bookmarkIndicator('header', hIndex, isBookmarked)}
+          ${content}
+        </h${level}>`;
+        hIndex++;
         return result;
       })
 }
@@ -90,22 +124,10 @@ function preProcessHTML(html, bookmarkedParas) {
 function postProcessHTML(url, markdown) {
   document.querySelectorAll('.bookmarkButton')
     .forEach(anchor => {
-      const pIndex = anchor.dataset.paragraphIndex;
+      const { bookmarkKind, bookmarkIndex } = anchor.dataset;
       anchor.onclick = (e) => {
         e.preventDefault();
-        const bookmarks = getBookmarks();
-        if (!bookmarks.hasOwnProperty(url)) {
-          saveBookmark(url, markdown, pIndex);
-        } else {
-          const bookmark = bookmarks[url];
-          const bookmarkedParas = bookmark.bookmarkedParas;
-          if (bookmarkedParas.includes(pIndex)) {
-            bookmark.bookmarkedParas = bookmarkedParas.filter(i => `${i}` !== `${pIndex}`);
-          } else {
-            bookmark.bookmarkedParas.push(pIndex);
-          }
-          localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-        }
+        toggleBlockBookmark(url, markdown, bookmarkKind, bookmarkIndex);
         loadPage(url);
         renderBookmarksDropdown(getBookmarks());
       }
@@ -126,29 +148,16 @@ async function loadPage(url, isDemo = false) {
 
   try {
     console.log(...arguments)
-    const rawMarkdown =
-      isDemo ? `
-# About Markweb
-
-Markweb de-clutters the web for reading.  
-To understand how links work, try clicking the '→' sign beside  
-this link, and then click the link itself: [How to Do Great Work (Paul Graham)](https://paulgraham.com/greatwork.html).
-
-To open Markweb from a webpage (let's say you're coming from \`https://example.com\`), you can simply add  
-\`leidnedya.github.io/markweb/#<your-url-here>\` before the URL.
-
-![demo gif](./demo.gif)
-    ` :
-        isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url);
+    const rawMarkdown = isDemo ?
+      DEMO_MARKDOWN :
+      (isBookmarked ? bookmarks[url].mdContent : await getJinaMarkdown(url));
     currentMarkdown = rawMarkdown;
     const {
       title,
       content: markdown
-    } = isDemo ?
-        { title: 'Welcome to Markweb!', content: rawMarkdown } :
-        parseJinaResponse(rawMarkdown);
+    } = parseJinaResponse(rawMarkdown);
     const rawHtml = marked.parse(markdown);
-    const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url].bookmarkedParas : undefined);
+    const html = preProcessHTML(rawHtml, isBookmarked ? bookmarks[url] : undefined);
 
     content.innerHTML = html;
     document.title = title;
@@ -156,7 +165,8 @@ To open Markweb from a webpage (let's say you're coming from \`https://example.c
 
     stealFavicon(url);
 
-    renderParagraphJumpButton(currentUrl, getBookmarks());
+    currBlockBookmarkIndex = 0;
+    renderBookmarkJumpButton();
 
     console.log(`loaded.`);
   } catch (err) {
@@ -190,11 +200,9 @@ window.onload = () => {
       renderBookmarksDropdown(getBookmarks());
     }
   }
-  nextBookmarkParaButton.onclick = () => {
-    const bookmarkedParas = getBookmarks()?.[currentUrl].bookmarkedParas;
-    if (bookmarkedParas.length > 0) {
-      scrollToBookmarkPara(currParaBookmarkIndex % bookmarkedParas.length, getBookmarks(), currentUrl);
-      currParaBookmarkIndex++;
+  nextBookmarkBlockButton.onclick = () => {
+    if (scrollToBookmark(currBlockBookmarkIndex)) {
+      currBlockBookmarkIndex++;
     }
   }
   pageBookmarkButton.onclick = (e) => {

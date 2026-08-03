@@ -1,7 +1,7 @@
 const statusBar = document.querySelector('#status-bar');
 const bookmarksDropdown = document.querySelector('#bookmarks');
 const bookmarkContainer = document.querySelector('#bookmark-container');
-const nextBookmarkParaButton = document.querySelector('#next-bookmark')
+const nextBookmarkBlockButton = document.querySelector('#next-bookmark')
 
 export function showStatus(text) {
   statusBar.style.display = 'block';
@@ -24,16 +24,25 @@ export function renderBookmarksDropdown(bookmarks) {
   });
 }
 
-export function scrollToBookmarkPara(bookmarkIndex, bookmarks, url) {
-  document.querySelector(`[data-paragraph-index="${bookmarks[url].bookmarkedParas[bookmarkIndex]}"]`)
-    ?.parentElement.parentElement.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    })
+// Every bookmarked paragraph and header on the page, in the order they appear
+function getBookmarkedBlockElements() {
+  return Array.from(document.querySelectorAll('#content .bookmark-indicator.bookmarked'))
+    .map(indicator => indicator.parentElement);
 }
 
-export const renderParagraphJumpButton = (url, bookmarks) => {
-  const bookmarkedParas = bookmarks?.[url]?.bookmarkedParas;
-  nextBookmarkParaButton.style.display = (bookmarkedParas && bookmarkedParas?.length > 0) ? 'flex' : 'none';
+export function scrollToBookmark(bookmarkIndex) {
+  const blocks = getBookmarkedBlockElements();
+  if (blocks.length === 0) {
+    return false;
+  }
+  blocks[bookmarkIndex % blocks.length].scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+  return true;
+}
+
+export const renderBookmarkJumpButton = () => {
+  nextBookmarkBlockButton.style.display = getBookmarkedBlockElements().length > 0 ? 'flex' : 'none';
 }
 
