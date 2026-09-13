@@ -4,24 +4,24 @@ import { deleteBookmark, getBookmarkedBlocks, getBookmarks, saveBookmark, toggle
 import { bookmarkSvg } from './svg.js';
 import { getJinaMarkdown, stealFavicon } from './data/requests.js';
 
-const START_URL = 'https://leidnedya.github.io/markweb/introduction.html';
+const START_URL = 'https://reader.unslop.news';
 
 // Kept in the same shape as a Jina response so that bookmarking the demo page
 // caches markdown that parseJinaResponse can read back.
-const DEMO_MARKDOWN = `Title: Welcome to Markweb!
+const DEMO_MARKDOWN = `Title: Welcome to Reader!
 URL Source: ${START_URL}
 Markdown Content:
 
-# About Markweb
+# About Reader
 
-Markweb de-clutters the web for reading.  
+Reader de-clutters the web for reading.
 To understand how links work, try clicking the '→' sign beside  
 this link, and then click the link itself: [How to Do Great Work (Paul Graham)](https://paulgraham.com/greatwork.html).
 
-To open Markweb from a webpage (let's say you're coming from \`https://example.com\`), you can simply add  
-\`leidnedya.github.io/markweb/#<your-url-here>\` before the URL.
+To open Reader from a webpage (let's say you're coming from \`https://example.com\`), you can simply add
+\`reader.unslop.news/\` before the URL.
 
-![demo gif](./demo.gif)
+![demo gif](/demo.gif)
 `;
 
 let currentUrl = null;
@@ -180,7 +180,7 @@ async function handleLinkClick(e, url) {
   e?.preventDefault();
   hideStatus();
   await loadPage(url);
-  history.pushState(url, url);
+  history.pushState(url, '', '/' + url);
 }
 
 window.onload = () => {
@@ -189,8 +189,13 @@ window.onload = () => {
   window.hideStatus = hideStatus;
   window.handleLinkClick = handleLinkClick;
 
+  const path = window.location.pathname;
+  const pathUrl = path.startsWith('/http://') || path.startsWith('/https://')
+    ? path.slice(1) + window.location.search
+    : null;
   const hashUrl = window.location.hash ? window.location.hash.slice(1) : null;
-  loadPage(hashUrl ? hashUrl : START_URL, !hashUrl);
+  const initialUrl = pathUrl || hashUrl;
+  loadPage(initialUrl || START_URL, !initialUrl);
   renderBookmarksDropdown(getBookmarks());
   loadBookmarkButton.onclick = async (e) => {
     e.preventDefault();
@@ -222,12 +227,12 @@ window.onload = () => {
 
 window.addEventListener('popstate', (e) => {
   e.preventDefault();
-  loadPage(e.state);
+  loadPage(e.state || START_URL, !e.state);
 })
 
 inputForm.onsubmit = async (e) => {
   e.preventDefault();
   const url = urlInput.value;
   await loadPage(url);
-  history.pushState(url, url)
+  history.pushState(url, '', '/' + url)
 }
