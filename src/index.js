@@ -22,6 +22,8 @@ To open Reader from a webpage (let's say you're coming from \`https://example.co
 \`reader.unslop.news/\` before the URL.
 
 ![demo gif](/demo.gif)
+
+By [ayden](aydendiel.dev). [Contribute or fork it :)](https://github.com/leiDnedyA/markweb)
 `;
 
 let currentUrl = null;
