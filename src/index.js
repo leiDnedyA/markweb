@@ -23,7 +23,7 @@ To open Reader from a webpage (let's say you're coming from \`https://example.co
 
 ![demo gif](/demo.gif)
 
-By [ayden](aydendiel.dev). [Contribute or fork it :)](https://github.com/leiDnedyA/markweb)
+By [ayden](https://aydendiel.dev). <a href="https://github.com/leiDnedyA/markweb" target="_blank" rel="noopener noreferrer">Contribute or fork it :)</a>
 `;
 
 let currentUrl = null;
